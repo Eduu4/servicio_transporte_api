@@ -12,6 +12,36 @@ app.get('/', (req, res) => {
   res.json({ mensaje: 'API funcionando correctamente 🚀' });
 });
 
+// Health check endpoint with database connection test
+app.get('/health', async (req, res) => {
+  try {
+    const db = require('./db');
+    const result = await db.query('SELECT NOW()');
+    res.json({ 
+      status: 'ok',
+      database: 'connected',
+      time: result.rows[0].now,
+      environment: {
+        NODE_ENV: process.env.NODE_ENV,
+        PGHOST: process.env.PGHOST,
+        PGDATABASE: process.env.PGDATABASE,
+        PORT: process.env.PORT
+      }
+    });
+  } catch (error) {
+    res.status(500).json({ 
+      status: 'error',
+      database: 'disconnected',
+      error: error.message,
+      environment: {
+        PGHOST: process.env.PGHOST,
+        PGDATABASE: process.env.PGDATABASE,
+        PGUSER: process.env.PGUSER
+      }
+    });
+  }
+});
+
 // Routes
 app.use('/api/auth', require('./routes/auth'));
 app.use('/api/users', require('./routes/users'));
